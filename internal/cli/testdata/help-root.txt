@@ -1,0 +1,46 @@
+cmux relays Claude Code commands into tmux panes.
+
+Claude cannot type into its own terminal, but it can run a shell command, and a
+shell command can tell tmux to type. That is all cmux is.
+
+Usage:
+  cmux [flags] <command> [arguments]
+
+Commands:
+  goal <text>   Set the target session's goal
+  compact       Compact the target's conversation
+  clear         Clear the target's conversation
+  model <name>  Switch the target's model
+  resume        Open the target's resume picker
+  context       Show the target's context usage
+  cost          Show the target's cost and usage
+  agents        Open the target's agent list
+  interrupt     Cancel whatever the target is doing
+  panes         List the Claude Code panes cmux can see
+  status        Show this pane, detection result and default target
+
+Flags:
+  --to <target>      pane id (%12), session:window.pane, or an index from cmux panes
+  --all-panes        allow a target that was not detected as Claude Code
+  --dry-run          print the tmux calls instead of making them
+  --defer <seconds>  have tmux deliver the keys later, via run-shell
+  --self             allow interrupt to target the pane cmux was run from
+  -h, --help         show help
+  --version          show version
+
+Examples:
+  cmux goal Ship the parser rewrite
+  cmux compact
+  cmux panes
+  cmux --to %12 interrupt
+  cmux --defer 5 clear
+
+Notes:
+  Slash commands take effect immediately, even if the target is mid-turn. That
+  includes clear and compact, so aiming one at your own pane discards history
+  while your turn is still running. Use --defer to get out of the way first.
+
+  interrupt is different again: it sends a bare Escape, which is never queued
+  and cancels the target's current turn on arrival.
+
+Run 'cmux <command> --help' for more about one command.

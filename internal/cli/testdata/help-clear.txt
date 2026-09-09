@@ -1,0 +1,22 @@
+Clear the target's conversation
+
+Usage:
+  cmux clear
+
+Sends /clear.
+
+Like compact, this fires immediately rather than waiting for the target to
+finish. Clearing a session that is mid-tool-call discards its history while
+the tool is still running.
+
+Example:
+  cmux clear
+
+Flags:
+  --to <target>      pane id (%12), session:window.pane, or an index from cmux panes
+  --all-panes        allow a target that was not detected as Claude Code
+  --dry-run          print the tmux calls instead of making them
+  --defer <seconds>  have tmux deliver the keys later, via run-shell
+  --self             allow interrupt to target the pane cmux was run from
+  -h, --help         show help
+  --version          show version

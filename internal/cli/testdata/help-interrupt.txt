@@ -1,0 +1,22 @@
+Cancel whatever the target is doing
+
+Usage:
+  cmux interrupt
+
+Sends a bare Escape key.
+
+Unlike every other command this is not text and is never queued: it takes
+effect the instant it lands. Sent to your own pane it would cancel the very
+turn that is running cmux, so that needs --self.
+
+Example:
+  cmux --to %12 interrupt
+
+Flags:
+  --to <target>      pane id (%12), session:window.pane, or an index from cmux panes
+  --all-panes        allow a target that was not detected as Claude Code
+  --dry-run          print the tmux calls instead of making them
+  --defer <seconds>  have tmux deliver the keys later, via run-shell
+  --self             allow interrupt to target the pane cmux was run from
+  -h, --help         show help
+  --version          show version
