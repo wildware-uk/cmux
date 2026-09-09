@@ -1,0 +1,22 @@
+Compact the target's conversation
+
+Usage:
+  cmux compact
+
+Sends /compact.
+
+This fires immediately, even if the target is in the middle of a turn. When
+aimed at the pane you are calling from, that means it compacts while your own
+turn is still running. cmux warns when it spots that; --defer buys you time.
+
+Example:
+  cmux compact
+
+Flags:
+  --to <target>      pane id (%12), session:window.pane, or an index from cmux panes
+  --all-panes        allow a target that was not detected as Claude Code
+  --dry-run          print the tmux calls instead of making them
+  --defer <seconds>  have tmux deliver the keys later, via run-shell
+  --self             allow interrupt to target the pane cmux was run from
+  -h, --help         show help
+  --version          show version

@@ -1,0 +1,21 @@
+List the Claude Code panes cmux can see
+
+Usage:
+  cmux panes
+
+Lists discovered Claude Code panes with an index you can pass to --to.
+
+With --all-panes, lists every tmux pane and shows which ones were detected
+as Claude Code.
+
+Example:
+  cmux panes --all-panes
+
+Flags:
+  --to <target>      pane id (%12), session:window.pane, or an index from cmux panes
+  --all-panes        allow a target that was not detected as Claude Code
+  --dry-run          print the tmux calls instead of making them
+  --defer <seconds>  have tmux deliver the keys later, via run-shell
+  --self             allow interrupt to target the pane cmux was run from
+  -h, --help         show help
+  --version          show version

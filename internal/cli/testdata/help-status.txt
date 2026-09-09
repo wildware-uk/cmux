@@ -1,0 +1,18 @@
+Show this pane, detection result and default target
+
+Usage:
+  cmux status
+
+Answers "where am I, and what would a bare cmux compact hit?"
+
+Example:
+  cmux status
+
+Flags:
+  --to <target>      pane id (%12), session:window.pane, or an index from cmux panes
+  --all-panes        allow a target that was not detected as Claude Code
+  --dry-run          print the tmux calls instead of making them
+  --defer <seconds>  have tmux deliver the keys later, via run-shell
+  --self             allow interrupt to target the pane cmux was run from
+  -h, --help         show help
+  --version          show version
