@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/wildware-uk/cmux/internal/discover"
 	"github.com/wildware-uk/cmux/internal/inject"
@@ -49,6 +50,8 @@ type run struct {
 	errOut io.Writer
 
 	currentPane string
+	// sleep is the polling delay, replaced in tests so they do not wait.
+	sleep func(time.Duration)
 }
 
 // Finder is the subset of discover.Finder the commands use, so tests can
@@ -69,6 +72,8 @@ type Env struct {
 	Build       BuildInfo
 	CurrentPane string
 	Self        string // path used when building a --defer command line
+	// Sleep replaces the polling delay in tests. nil means time.Sleep.
+	Sleep func(time.Duration)
 }
 
 // Main runs cmux against the real world.
@@ -121,6 +126,23 @@ func Run(env Env) int {
 		return exitUsage
 	}
 
+	if len(cmd.Sub) > 0 {
+		if len(args) == 0 || isFlag(args[0]) {
+			if opts.help || (len(args) > 0 && args[0] == "--help") {
+				writeCommandHelp(env.Stdout, cmd)
+				return exitOK
+			}
+			fmt.Fprintf(env.Stderr, "cmux: %s needs a subcommand: %s\n", cmd.Name, cmd.subNames())
+			return exitUsage
+		}
+		sub := cmd.findSub(args[0])
+		if sub == nil {
+			fmt.Fprintf(env.Stderr, "cmux: unknown %s subcommand %q; try: %s\n", cmd.Name, args[0], cmd.subNames())
+			return exitUsage
+		}
+		cmd, args = sub, args[1:]
+	}
+
 	// For commands that do not take free text, flags may also follow the
 	// subcommand. For goal and friends everything after the name is literal.
 	if !cmd.FreeText {
@@ -154,6 +176,10 @@ func Run(env Env) int {
 		finder: env.Finder, client: env.Client, build: env.Build,
 		out: env.Stdout, errOut: env.Stderr,
 		currentPane: env.CurrentPane,
+		sleep:       env.Sleep,
+	}
+	if r.sleep == nil {
+		r.sleep = time.Sleep
 	}
 	if r.finder == nil {
 		r.finder = discover.New(env.Client)
@@ -190,6 +216,10 @@ func send(ctx context.Context, r *run, env Env) error {
 	targetingSelf := pane.ID == env.CurrentPane && env.CurrentPane != ""
 	if targetingSelf && r.cmd.SelfNeedsFlag && !r.opts.self {
 		return fmt.Errorf("%s would cancel the turn that is running cmux; pass --self if you mean it", r.cmd.Name)
+	}
+
+	if r.cmd.Drive != nil {
+		return r.cmd.Drive(ctx, r, pane)
 	}
 
 	var ops []inject.Op
@@ -255,6 +285,8 @@ func deferCommandLine(self, target string, r *run) string {
 func shellQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
+
+func isFlag(s string) bool { return strings.HasPrefix(s, "-") }
 
 func stripLeadingDashDash(args []string) []string {
 	if len(args) > 0 && args[0] == "--" {

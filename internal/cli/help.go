@@ -70,6 +70,15 @@ func writeCommandHelp(w io.Writer, c *Command) {
 	if c.Long != "" {
 		fmt.Fprintf(w, "\n%s\n", c.Long)
 	}
+	if len(c.Sub) > 0 {
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, "Subcommands:")
+		tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+		for _, s := range c.Sub {
+			fmt.Fprintf(tw, "  %s\t%s\n", s.Usage()[len("cmux "):], s.Summary)
+		}
+		tw.Flush()
+	}
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Example:")
 	fmt.Fprintf(w, "  %s\n", example(c))
@@ -91,6 +100,10 @@ func example(c *Command) string {
 		return "cmux status"
 	case "rate-limit-options":
 		return "cmux --to %12 rate-limit-options"
+	case "mcp":
+		return "cmux mcp reconnect agent-dashboard"
+	case "reconnect":
+		return "cmux --to %12 mcp reconnect agent-dashboard-channel"
 	default:
 		return "cmux " + c.Name
 	}

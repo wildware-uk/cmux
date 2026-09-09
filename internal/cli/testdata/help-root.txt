@@ -17,6 +17,7 @@ Commands:
   cost                Show the target's cost and usage
   agents              Open the target's agent list
   interrupt           Cancel whatever the target is doing
+  mcp <subcommand>    Manage the target's MCP servers
   panes               List the Claude Code panes cmux can see
   status              Show this pane, detection result and default target
 

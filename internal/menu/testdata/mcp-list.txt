@@ -1,0 +1,10 @@
+   Manage MCP servers
+   2 servers
+
+     User MCPs (/home/shaun/.claude.json)
+   ❯ agent-dashboard · ✔ connected · 24 tools
+     agent-dashboard-channel · ✘ failed
+
+   ※ Run claude --debug to see error logs
+   https://code.claude.com/docs/en/mcp for help
+   ↑/↓ to navigate · Enter to confirm · Esc to cancel

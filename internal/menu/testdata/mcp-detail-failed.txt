@@ -1,0 +1,11 @@
+   Agent-dashboard-channel MCP Server
+
+   Status:           ✘ failed
+   Command:          node
+   Args:             /srv/ssd1/workspace/agent-dashboard/build/channel.js
+   Config location:  /home/shaun/.claude.json
+
+   ❯ 1. Reconnect
+     2. Disable
+
+   ↑/↓ to navigate · Enter to select · Esc to back
