@@ -7,17 +7,18 @@ Usage:
   cmux [flags] <command> [arguments]
 
 Commands:
-  goal <text>   Set the target session's goal
-  compact       Compact the target's conversation
-  clear         Clear the target's conversation
-  model <name>  Switch the target's model
-  resume        Open the target's resume picker
-  context       Show the target's context usage
-  cost          Show the target's cost and usage
-  agents        Open the target's agent list
-  interrupt     Cancel whatever the target is doing
-  panes         List the Claude Code panes cmux can see
-  status        Show this pane, detection result and default target
+  goal <text>         Set the target session's goal
+  compact             Compact the target's conversation
+  clear               Clear the target's conversation
+  model <name>        Switch the target's model
+  resume              Open the target's resume picker
+  rate-limit-options  Arm the target to wait out a usage limit and carry on
+  context             Show the target's context usage
+  cost                Show the target's cost and usage
+  agents              Open the target's agent list
+  interrupt           Cancel whatever the target is doing
+  panes               List the Claude Code panes cmux can see
+  status              Show this pane, detection result and default target
 
 Flags:
   --to <target>      pane id (%12), session:window.pane, or an index from cmux panes

@@ -80,6 +80,7 @@ func TestSlashCommands(t *testing.T) {
 		{[]string{"context"}, "/context "},
 		{[]string{"cost"}, "/cost "},
 		{[]string{"agents"}, "/agents "},
+		{[]string{"rate-limit-options"}, "/rate-limit-options "},
 		{[]string{"model", "opus"}, "/model opus "},
 		{[]string{"goal", "Ship", "the", "parser"}, "/goal Ship the parser "},
 	} {
