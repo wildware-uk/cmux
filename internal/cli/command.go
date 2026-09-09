@@ -65,6 +65,16 @@ func commands() []*Command {
 			Long:    "Sends /model followed by the model name.",
 		},
 		{Name: "resume", Slash: "/resume", Summary: "Open the target's resume picker"},
+		{
+			Name: "rate-limit-options", Slash: "/rate-limit-options",
+			Summary: "Arm the target to wait out a usage limit and carry on",
+			Long: "Sends /rate-limit-options, which opens Claude Code's own menu for what to do\n" +
+				"when you hit a usage limit.\n\n" +
+				"Arming the auto-resume option there is the reliable way to stop a session\n" +
+				"stalling overnight: it waits for the limit to reset and continues by itself,\n" +
+				"with no watching and no screen scraping. Prefer it over cmux watch, which\n" +
+				"exists only for sessions that reached the limit without being armed.",
+		},
 		{Name: "context", Slash: "/context", Summary: "Show the target's context usage"},
 		{Name: "cost", Slash: "/cost", Summary: "Show the target's cost and usage"},
 		{Name: "agents", Slash: "/agents", Summary: "Open the target's agent list"},

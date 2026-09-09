@@ -89,6 +89,8 @@ func example(c *Command) string {
 		return "cmux panes --all-panes"
 	case "status":
 		return "cmux status"
+	case "rate-limit-options":
+		return "cmux --to %12 rate-limit-options"
 	default:
 		return "cmux " + c.Name
 	}
