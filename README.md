@@ -54,6 +54,8 @@ a shell wrapper. `cmux panes` shows what it found.
 | `cmux cost` | `/cost` |
 | `cmux agents` | `/agents` |
 | `cmux interrupt` | a bare Escape key |
+| `cmux rate-limit-options` | `/rate-limit-options` |
+| `cmux mcp reconnect <server>` | `/mcp`, then picks the server and its Reconnect action |
 | `cmux panes` | nothing — lists the panes cmux can see |
 | `cmux status` | nothing — shows where you are and what a bare command would hit |
 
@@ -92,6 +94,29 @@ lands, so pointing it at your own pane needs `--self`.
 
 Plain text behaves differently — it waits in the input box until the current turn
 ends. Only slash commands jump the queue.
+
+## Reconnecting an MCP server
+
+`cmux mcp reconnect <server>` is the one command that does more than type. It
+opens `/mcp`, walks the menu to the server you named, presses Reconnect, and
+then reads the answer back off the screen, so it exits non-zero when the
+reconnect actually failed rather than when a key was pressed.
+
+Reading the screen instead of assuming is not fussiness. Three things move:
+
+- **The action number.** A broken server shows `1. Reconnect`; a healthy one
+  shows `3. Reconnect`, behind View tools and Clear authentication. Pressing a
+  hardcoded `1` on a healthy server opens View tools and looks like it worked.
+- **Which row the cursor is on.** The server list is not number-selectable, so
+  the cursor is stepped onto the row — counted in entries, not screen lines,
+  because a scope heading between groups is a line the cursor skips.
+- **What else is on screen.** Claude Code echoes every prompt as `❯ /mcp`, the
+  same character the menu cursor uses, and past results stay in the transcript.
+  Only the block between the menu heading and its keyboard footer is read.
+
+Names are matched exactly, because they nest: `agent-dashboard` is a prefix of
+`agent-dashboard-channel`, and a substring match reconnects the wrong server —
+or reports the wrong one's result.
 
 ## About `/goal`
 

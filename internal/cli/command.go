@@ -1,5 +1,12 @@
 package cli
 
+import (
+	"context"
+	"strings"
+
+	"github.com/wildware-uk/cmux/internal/discover"
+)
+
 // Command is one cmux subcommand.
 type Command struct {
 	Name string
@@ -24,6 +31,14 @@ type Command struct {
 	SelfNeedsFlag bool
 	// Local is set for commands cmux answers without touching the target.
 	Local func(*run) error
+	// Drive is set for commands that walk an interactive menu rather than
+	// sending a single payload. The target is already resolved and checked.
+	Drive func(context.Context, *run, discover.Pane) error
+	// Sub holds nested subcommands, as in "cmux mcp reconnect".
+	Sub []*Command
+	// Path is the full invocation for a nested command, e.g. "mcp reconnect".
+	// Empty for top-level commands, which are named by Name alone.
+	Path string
 
 	Summary string
 	Long    string
@@ -87,6 +102,24 @@ func commands() []*Command {
 				"turn that is running cmux, so that needs --self.",
 		},
 		{
+			Name: "mcp", Arg: "<subcommand>",
+			Summary: "Manage the target's MCP servers",
+			Long:    "Drives the target's /mcp menu.",
+			Sub: []*Command{
+				{
+					Name: "reconnect", Path: "mcp reconnect", Arg: "<server>", ArgRequired: true,
+					Drive:   driveMCPReconnect,
+					Summary: "Reconnect one of the target's MCP servers",
+					Long: "Opens /mcp, selects the named server, and chooses Reconnect.\n\n" +
+						"The server name must match exactly. Names nest — agent-dashboard is a\n" +
+						"prefix of agent-dashboard-channel — so a partial name is refused rather\n" +
+						"than guessed at.\n\n" +
+						"Exits non-zero if the reconnect failed, reading the outcome from the\n" +
+						"pane rather than assuming the keypress worked.",
+				},
+			},
+		},
+		{
 			Name: "panes", Local: cmdPanes,
 			Summary: "List the Claude Code panes cmux can see",
 			Long: "Lists discovered Claude Code panes with an index you can pass to --to.\n\n" +
@@ -101,6 +134,25 @@ func commands() []*Command {
 	}
 }
 
+// findSub looks up a nested subcommand by name.
+func (c *Command) findSub(name string) *Command {
+	for _, s := range c.Sub {
+		if s.Name == name {
+			return s
+		}
+	}
+	return nil
+}
+
+// subNames lists the nested subcommands, for error messages and help.
+func (c *Command) subNames() string {
+	var names []string
+	for _, s := range c.Sub {
+		names = append(names, s.Name)
+	}
+	return strings.Join(names, ", ")
+}
+
 func lookup(name string) *Command {
 	for _, c := range commands() {
 		if c.Name == name {
@@ -112,8 +164,12 @@ func lookup(name string) *Command {
 
 // Usage is the one-line form shown in help.
 func (c *Command) Usage() string {
-	if c.Arg == "" {
-		return "cmux " + c.Name
+	name := c.Name
+	if c.Path != "" {
+		name = c.Path
 	}
-	return "cmux " + c.Name + " " + c.Arg
+	if c.Arg == "" {
+		return "cmux " + name
+	}
+	return "cmux " + name + " " + c.Arg
 }

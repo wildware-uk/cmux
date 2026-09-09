@@ -45,6 +45,7 @@ type Client interface {
 	PasteBuffer(ctx context.Context, target string) error
 	Version(ctx context.Context) (string, error)
 	RunShellDetached(ctx context.Context, delay int, command string) error
+	CapturePane(ctx context.Context, target string) (string, error)
 }
 
 // fieldSep separates fields in the list-panes format string.
@@ -178,8 +179,8 @@ func (e Exec) RunShellDetached(ctx context.Context, delay int, command string) e
 	return err
 }
 
-// CapturePane returns the visible contents of a pane. Only used by the
-// integration tests, which need to see what actually arrived.
+// CapturePane returns the visible contents of a pane. Used to read Claude
+// Code's interactive menus, and by the integration tests.
 func (e Exec) CapturePane(ctx context.Context, target string) (string, error) {
 	out, err := e.run(ctx, nil, "capture-pane", "-p", "-t", target)
 	return string(out), err

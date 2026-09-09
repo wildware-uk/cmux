@@ -24,6 +24,8 @@ func (c Call) String() string {
 		return fmt.Sprintf("load-buffer %q", c.Payload)
 	case "paste-buffer":
 		return fmt.Sprintf("paste-buffer -t %s", c.Target)
+	case "capture-pane":
+		return fmt.Sprintf("capture-pane -t %s", c.Target)
 	case "run-shell":
 		return fmt.Sprintf("run-shell -b -d %d %q", c.Delay, c.Command)
 	default:
@@ -38,6 +40,9 @@ type Fake struct {
 	Err        error // returned by every method when set
 	Calls      []Call
 	LastBuffer string
+	// Screen is what CapturePane returns; Screens scripts a sequence instead.
+	Screen  string
+	Screens []string
 }
 
 func (f *Fake) ListPanes(ctx context.Context) ([]Pane, error) {
@@ -72,6 +77,23 @@ func (f *Fake) Version(ctx context.Context) (string, error) {
 		return "3.4", nil
 	}
 	return f.Ver, nil
+}
+
+// Screens are returned by successive CapturePane calls, so a test can script a
+// menu that changes as keys are sent. The last one repeats once exhausted.
+func (f *Fake) CapturePane(ctx context.Context, target string) (string, error) {
+	f.Calls = append(f.Calls, Call{Op: "capture-pane", Target: target})
+	if f.Err != nil {
+		return "", f.Err
+	}
+	if len(f.Screens) == 0 {
+		return f.Screen, nil
+	}
+	s := f.Screens[0]
+	if len(f.Screens) > 1 {
+		f.Screens = f.Screens[1:]
+	}
+	return s, nil
 }
 
 func (f *Fake) RunShellDetached(ctx context.Context, delay int, command string) error {

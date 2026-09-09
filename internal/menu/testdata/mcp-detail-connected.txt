@@ -1,0 +1,15 @@
+   Agent-dashboard MCP Server
+
+   Status:           ✔ connected
+   Auth:             ✔ authenticated
+   URL:              http://127.0.0.1:8010/mcp
+   Config location:  /home/shaun/.claude.json
+   Capabilities: tools
+   Tools: 24 tools
+
+   ❯ 1. View tools
+     2. Clear authentication
+     3. Reconnect
+     4. Disable
+
+   ↑/↓ to navigate · Enter to select · Esc to back
