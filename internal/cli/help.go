@@ -83,6 +83,15 @@ func writeCommandHelp(w io.Writer, c *Command) {
 	fmt.Fprintln(w, "Example:")
 	fmt.Fprintf(w, "  %s\n", example(c))
 	fmt.Fprintln(w)
+	if len(c.Flags) > 0 {
+		fmt.Fprintf(w, "Flags for %s:\n", c.Name)
+		tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+		for _, f := range c.Flags {
+			fmt.Fprintf(tw, "  %s\t%s\n", f[0], f[1])
+		}
+		tw.Flush()
+		fmt.Fprintln(w)
+	}
 	writeFlags(w)
 }
 
@@ -98,6 +107,8 @@ func example(c *Command) string {
 		return "cmux panes --all-panes"
 	case "status":
 		return "cmux status"
+	case "watch":
+		return "cmux --to %12 watch --interval 10s"
 	case "rate-limit-options":
 		return "cmux --to %12 rate-limit-options"
 	case "mcp":

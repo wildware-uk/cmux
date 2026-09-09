@@ -55,6 +55,7 @@ a shell wrapper. `cmux panes` shows what it found.
 | `cmux agents` | `/agents` |
 | `cmux interrupt` | a bare Escape key |
 | `cmux rate-limit-options` | `/rate-limit-options` |
+| `cmux watch` | nothing until the usage-limit menu appears, then picks the wait option |
 | `cmux mcp reconnect <server>` | `/mcp`, then picks the server and its Reconnect action |
 | `cmux panes` | nothing — lists the panes cmux can see |
 | `cmux status` | nothing — shows where you are and what a bare command would hit |
@@ -94,6 +95,30 @@ lands, so pointing it at your own pane needs `--self`.
 
 Plain text behaves differently — it waits in the input box until the current turn
 ends. Only slash commands jump the queue.
+
+## Waiting out a usage limit
+
+`cmux watch` sits on a pane and, when Claude Code's usage-limit menu appears,
+picks the option that waits — preferring one that then continues on its own, so
+an unattended session resumes instead of stopping until someone notices.
+
+```
+cmux watch
+cmux --to %12 watch --interval 10s --once
+```
+
+Two rules it will not break: it never presses **Upgrade your plan** or **Add
+funds**, and it presses nothing at all on a menu it does not recognise. A wrong
+press here costs money, so doing nothing is the right answer to an unfamiliar
+screen.
+
+Prefer `cmux rate-limit-options`. Arming Claude Code's own auto-resume ahead of
+time means the menu never blocks in the first place, with no polling and no
+screen scraping. `watch` is the net for sessions that hit the limit unarmed, and
+it is the only cmux command that keeps running.
+
+The wording it looks for is one list in `internal/menu/limit.go`, so when Claude
+Code rewords the menu, that is the file to change.
 
 ## Reconnecting an MCP server
 

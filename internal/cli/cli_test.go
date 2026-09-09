@@ -50,12 +50,13 @@ func (h *harness) run() int     { return Run(h.env) }
 func (h *harness) out() string  { return h.stdout.String() }
 func (h *harness) errs() string { return h.stderr.String() }
 
-// ops returns the operations that changed something, dropping the read-only
-// list-panes every command makes to resolve its target.
+// ops returns the operations that changed something, dropping the reads:
+// list-panes, which every command makes to resolve its target, and capture-pane,
+// which the menu-driving commands make to see what is on screen.
 func (h *harness) ops() []string {
 	var out []string
 	for _, op := range h.fake.Ops() {
-		if op != "list-panes" {
+		if op != "list-panes" && !strings.HasPrefix(op, "capture-pane") {
 			out = append(out, op)
 		}
 	}
