@@ -36,7 +36,14 @@ type options struct {
 	self     bool
 	help     bool
 	version  bool
+	// interval and once belong to watch, the only long-running command.
+	interval time.Duration
+	once     bool
 }
+
+// defaultInterval is how often watch looks at the pane. Slow enough to be
+// invisible, fast enough that a reset is not missed by much.
+const defaultInterval = 15 * time.Second
 
 // run carries everything a command needs.
 type run struct {
@@ -64,6 +71,8 @@ type Finder interface {
 
 // Env is the outside world, injected so tests can replace it.
 type Env struct {
+	// Ctx bounds long-running commands. nil means context.Background().
+	Ctx         context.Context
 	Args        []string
 	Stdout      io.Writer
 	Stderr      io.Writer
@@ -161,6 +170,19 @@ func Run(env Env) int {
 		return exitOK
 	}
 
+	// watch owns --interval and --once. Accepting them anywhere would let a
+	// typo look like it was understood.
+	if cmd.Name != "watch" {
+		if opts.once {
+			fmt.Fprintf(env.Stderr, "cmux: --once is only for watch\n")
+			return exitUsage
+		}
+		if opts.interval != defaultInterval {
+			fmt.Fprintf(env.Stderr, "cmux: --interval is only for watch\n")
+			return exitUsage
+		}
+	}
+
 	if cmd.ArgRequired && len(args) == 0 {
 		fmt.Fprintf(env.Stderr, "cmux: %s needs an argument\n", cmd.Name)
 		fmt.Fprintf(env.Stderr, "usage: %s\n", cmd.Usage())
@@ -192,7 +214,11 @@ func Run(env Env) int {
 		return exitOK
 	}
 
-	if err := send(context.Background(), r, env); err != nil {
+	ctx := env.Ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := send(ctx, r, env); err != nil {
 		return report(env.Stderr, err)
 	}
 	return exitOK
@@ -296,7 +322,26 @@ func stripLeadingDashDash(args []string) []string {
 }
 
 func parseGlobal(args []string) (options, []string, error) {
-	return parseGlobalInto(options{}, args)
+	return parseGlobalInto(options{interval: defaultInterval}, args)
+}
+
+func durationFlag(d time.Duration) string {
+	if d == 0 {
+		return defaultInterval.String()
+	}
+	return d.String()
+}
+
+// parseInterval takes a duration, or a bare number read as seconds.
+func parseInterval(s string) (time.Duration, error) {
+	if n, err := strconv.Atoi(s); err == nil {
+		s = strconv.Itoa(n) + "s"
+	}
+	d, err := time.ParseDuration(s)
+	if err != nil || d <= 0 {
+		return 0, fmt.Errorf("--interval wants a duration like 15s, got %q", s)
+	}
+	return d, nil
 }
 
 // parseGlobalInto parses global flags, starting from what was already set, and
@@ -315,6 +360,8 @@ func parseGlobalInto(start options, args []string) (options, []string, error) {
 	help := fs.Bool("help", opts.help, "")
 	helpShort := fs.Bool("h", opts.help, "")
 	version := fs.Bool("version", opts.version, "")
+	interval := fs.String("interval", durationFlag(opts.interval), "")
+	once := fs.Bool("once", opts.once, "")
 
 	if err := fs.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
@@ -336,5 +383,12 @@ func parseGlobalInto(start options, args []string) (options, []string, error) {
 	opts.self = *self
 	opts.help = *help || *helpShort
 	opts.version = *version
+	opts.once = *once
+
+	every, err := parseInterval(*interval)
+	if err != nil {
+		return opts, nil, err
+	}
+	opts.interval = every
 	return opts, fs.Args(), nil
 }

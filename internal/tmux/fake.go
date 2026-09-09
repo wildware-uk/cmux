@@ -43,6 +43,10 @@ type Fake struct {
 	// Screen is what CapturePane returns; Screens scripts a sequence instead.
 	Screen  string
 	Screens []string
+	// OnCapture, if set, is called with the capture count. A test uses it to
+	// stop a command that would otherwise poll forever.
+	OnCapture func(n int)
+	captures  int
 }
 
 func (f *Fake) ListPanes(ctx context.Context) ([]Pane, error) {
@@ -83,6 +87,10 @@ func (f *Fake) Version(ctx context.Context) (string, error) {
 // menu that changes as keys are sent. The last one repeats once exhausted.
 func (f *Fake) CapturePane(ctx context.Context, target string) (string, error) {
 	f.Calls = append(f.Calls, Call{Op: "capture-pane", Target: target})
+	if f.OnCapture != nil {
+		f.captures++
+		f.OnCapture(f.captures)
+	}
 	if f.Err != nil {
 		return "", f.Err
 	}

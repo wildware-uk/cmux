@@ -36,6 +36,9 @@ type Command struct {
 	Drive func(context.Context, *run, discover.Pane) error
 	// Sub holds nested subcommands, as in "cmux mcp reconnect".
 	Sub []*Command
+	// Flags are extra flags this command alone accepts, shown in its help above
+	// the shared ones.
+	Flags [][2]string
 	// Path is the full invocation for a nested command, e.g. "mcp reconnect".
 	// Empty for top-level commands, which are named by Name alone.
 	Path string
@@ -89,6 +92,24 @@ func commands() []*Command {
 				"stalling overnight: it waits for the limit to reset and continues by itself,\n" +
 				"with no watching and no screen scraping. Prefer it over cmux watch, which\n" +
 				"exists only for sessions that reached the limit without being armed.",
+		},
+		{
+			Name: "watch", Drive: driveWatch,
+			Flags: [][2]string{
+				{"--interval <duration>", "how often to look at the pane (default 15s)"},
+				{"--once", "stop after the first time the menu is dealt with"},
+			},
+			Summary: "Wait out usage limits on a pane, unattended",
+			Long: "Watches a pane and, when Claude Code's usage-limit menu appears, chooses the\n" +
+				"option that waits — preferring one that then continues automatically, so the\n" +
+				"session resumes without a human.\n\n" +
+				"It never presses Upgrade your plan or Add funds. If the menu is not one cmux\n" +
+				"recognises, it says so and presses nothing: a wrong press here costs money.\n\n" +
+				"Prefer cmux rate-limit-options. Arming that ahead of time means the menu never\n" +
+				"blocks in the first place; watch is the net for when it was not armed.\n\n" +
+				"This is the only cmux command that keeps running. It reads the menu off the\n" +
+				"screen, so a change to how Claude Code draws it will break watch — the\n" +
+				"wording it looks for is one list in internal/menu/limit.go.",
 		},
 		{Name: "context", Slash: "/context", Summary: "Show the target's context usage"},
 		{Name: "cost", Slash: "/cost", Summary: "Show the target's cost and usage"},

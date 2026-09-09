@@ -13,6 +13,7 @@ Commands:
   model <name>        Switch the target's model
   resume              Open the target's resume picker
   rate-limit-options  Arm the target to wait out a usage limit and carry on
+  watch               Wait out usage limits on a pane, unattended
   context             Show the target's context usage
   cost                Show the target's cost and usage
   agents              Open the target's agent list
