@@ -8,6 +8,7 @@ turns `cmux compact` into the tmux calls that put `/compact` into a pane.
 
 ```sh
 cmux goal Ship the parser rewrite
+cmux restart Pick up issue 12 where the last session left off
 cmux compact
 cmux clear
 cmux panes
@@ -46,6 +47,8 @@ a shell wrapper. `cmux panes` shows what it found.
 | Command | What it sends |
 |---|---|
 | `cmux goal <text>` | `/goal <text>` |
+| `cmux prompt <text>` | `<text>`, as a plain message |
+| `cmux restart <text>` | nothing until the turn ends, then `/clear`, then `<text>` |
 | `cmux compact` | `/compact` |
 | `cmux clear` | `/clear` |
 | `cmux model <name>` | `/model <name>` |
@@ -95,6 +98,29 @@ lands, so pointing it at your own pane needs `--self`.
 
 Plain text behaves differently — it waits in the input box until the current turn
 ends. Only slash commands jump the queue.
+
+## Starting yourself over
+
+`cmux restart <text>` is how a session clears its own context and carries on:
+
+```
+cmux restart "Carry on with issue 12. The parser half is merged; the tests are next."
+```
+
+Run from your own pane, it hands itself to tmux and returns at once, because a
+command that waited inline would hold your turn open forever. Then it waits for
+the pane to be still for five seconds — a running turn redraws its spinner every
+second, an idle pane never redraws — sends `/clear`, waits for the fresh screen to
+settle, and sends your text. Nothing else survives the clear, so the text has to
+say everything the next session needs.
+
+It sends nothing if the pane never goes still within thirty minutes, and holds
+the prompt back if the screen does not change after `/clear`. Progress goes to
+`$TMPDIR/cmux-<uid>.log`.
+
+Anything cmux runs later through tmux — `restart`, or any `--defer` — has its
+output sent to that log. tmux would otherwise show it in view mode over the
+pane, and a pane in view mode takes the next keys meant for Claude.
 
 ## Waiting out a usage limit
 

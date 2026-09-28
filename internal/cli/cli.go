@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -57,6 +58,11 @@ type run struct {
 	errOut io.Writer
 
 	currentPane string
+	// self and logPath are what a command needs to hand itself to tmux; see
+	// deferCommandLine. detached is true in the copy tmux runs.
+	self     string
+	logPath  string
+	detached bool
 	// sleep is the polling delay, replaced in tests so they do not wait.
 	sleep func(time.Duration)
 }
@@ -81,6 +87,11 @@ type Env struct {
 	Build       BuildInfo
 	CurrentPane string
 	Self        string // path used when building a --defer command line
+	// LogPath is where a deferred command's output goes. Empty means the
+	// deferred output is thrown away.
+	LogPath string
+	// Detached is set in a copy of cmux that tmux is running for --defer.
+	Detached bool
 	// Sleep replaces the polling delay in tests. nil means time.Sleep.
 	Sleep func(time.Duration)
 }
@@ -101,6 +112,8 @@ func Main(b BuildInfo) int {
 		Build:       b,
 		CurrentPane: os.Getenv("TMUX_PANE"),
 		Self:        self,
+		LogPath:     filepath.Join(os.TempDir(), fmt.Sprintf("cmux-%d.log", os.Getuid())),
+		Detached:    os.Getenv(detachedEnv) == "1",
 	})
 }
 
@@ -198,6 +211,9 @@ func Run(env Env) int {
 		finder: env.Finder, client: env.Client, build: env.Build,
 		out: env.Stdout, errOut: env.Stderr,
 		currentPane: env.CurrentPane,
+		self:        env.Self,
+		logPath:     env.LogPath,
+		detached:    env.Detached,
 		sleep:       env.Sleep,
 	}
 	if r.sleep == nil {
@@ -254,10 +270,8 @@ func send(ctx context.Context, r *run, env Env) error {
 		ops = inject.Key(r.cmd.Key)
 		what = r.cmd.Key
 	} else {
-		text := r.cmd.Slash
-		if len(r.args) > 0 {
-			text += " " + strings.Join(r.args, " ")
-		}
+		// prompt has no slash command, so the text is the arguments alone.
+		text := strings.TrimSpace(r.cmd.Slash + " " + strings.Join(r.args, " "))
 		ops = inject.Text(text)
 		what = inject.Sanitise(text)
 	}
@@ -276,7 +290,7 @@ func send(ctx context.Context, r *run, env Env) error {
 	}
 
 	if r.opts.defer_ > 0 {
-		line := deferCommandLine(env.Self, pane.ID, r)
+		line := deferCommandLine(pane.ID, r)
 		if err := r.client.RunShellDetached(ctx, r.opts.defer_, line); err != nil {
 			return err
 		}
@@ -291,10 +305,19 @@ func send(ctx context.Context, r *run, env Env) error {
 	return nil
 }
 
+// detachedEnv marks the copy of cmux that tmux runs for --defer, so a command
+// that detaches itself does not detach again.
+const detachedEnv = "CMUX_DETACHED"
+
 // deferCommandLine rebuilds this invocation as a command tmux can run later,
 // with the target pinned and --defer dropped so it does not reschedule itself.
-func deferCommandLine(self, target string, r *run) string {
-	parts := []string{shellQuote(self), "--to", target}
+//
+// Its output is redirected on purpose. tmux shows whatever a run-shell job
+// prints in view mode over the current pane, and a pane in view mode takes
+// every key sent after it — so a deferred "sent /clear" message would swallow
+// the next command meant for Claude.
+func deferCommandLine(target string, r *run) string {
+	parts := []string{detachedEnv + "=1", shellQuote(r.self), "--to", target}
 	if r.opts.allPanes {
 		parts = append(parts, "--all-panes")
 	}
@@ -304,6 +327,11 @@ func deferCommandLine(self, target string, r *run) string {
 	parts = append(parts, r.cmd.Name)
 	for _, a := range r.args {
 		parts = append(parts, shellQuote(a))
+	}
+	if r.logPath == "" {
+		parts = append(parts, ">/dev/null", "2>&1")
+	} else {
+		parts = append(parts, ">>"+shellQuote(r.logPath), "2>&1")
 	}
 	return strings.Join(parts, " ")
 }
