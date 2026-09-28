@@ -1,0 +1,1 @@
+scheduled restart of %1: once its turn ends it gets /clear, then "--help"

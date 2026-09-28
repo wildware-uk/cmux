@@ -78,6 +78,32 @@ func commands() []*Command {
 				"the tool is still running.",
 		},
 		{
+			Name: "prompt", Arg: "<text>", ArgRequired: true, FreeText: true,
+			Summary: "Send the target a plain message",
+			Long: "Types your text into the target's input box and submits it, as if you had\n" +
+				"typed it yourself.\n\n" +
+				"Unlike a slash command, plain text waits: sent to a pane that is mid-turn, it\n" +
+				"sits in the input box and goes out when the turn ends. Everything after the\n" +
+				"subcommand is taken literally, and runs of whitespace become single spaces.",
+		},
+		{
+			Name: "restart", Arg: "<text>", ArgRequired: true, FreeText: true,
+			Drive:   driveRestart,
+			Summary: "Wait for the turn to end, clear, then send a first prompt",
+			Long: "Starts the target over with a fresh context and a message to begin from.\n\n" +
+				"It waits until the pane has been still for five seconds — no spinner, no\n" +
+				"streaming text — which is what a finished turn looks like. Then it sends\n" +
+				"/clear, waits for the cleared screen to settle, and sends your text as a\n" +
+				"plain message.\n\n" +
+				"Aimed at your own pane it cannot wait inline, because your turn would never\n" +
+				"end while cmux holds it open. So it hands itself to tmux and returns at once;\n" +
+				"finish your turn and the rest happens behind you. Its progress goes to the\n" +
+				"cmux log, not the screen.\n\n" +
+				"If the pane never goes still within thirty minutes, nothing is sent. Nothing\n" +
+				"carries over a clear except the text you pass, so put everything the fresh\n" +
+				"session needs to know in it.",
+		},
+		{
 			Name: "model", Slash: "/model", Arg: "<name>", ArgRequired: true,
 			Summary: "Switch the target's model",
 			Long:    "Sends /model followed by the model name.",

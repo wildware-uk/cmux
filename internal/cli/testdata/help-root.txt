@@ -10,6 +10,8 @@ Commands:
   goal <text>         Set the target session's goal
   compact             Compact the target's conversation
   clear               Clear the target's conversation
+  prompt <text>       Send the target a plain message
+  restart <text>      Wait for the turn to end, clear, then send a first prompt
   model <name>        Switch the target's model
   resume              Open the target's resume picker
   rate-limit-options  Arm the target to wait out a usage limit and carry on
